@@ -6,6 +6,7 @@ const fs = require('fs');
 const request = require('request');
 
 const inviteFile = './invites.json';
+const failedFile = './fails.json'
 const sleepTime = 15000;
 
 let obj = {
@@ -14,6 +15,15 @@ let obj = {
 
 var json = JSON.stringify(obj);
 fs.writeFile(inviteFile, json, 'utf8', function(err) {
+    if (err) throw err;
+});
+
+let obj2 = {
+    fails: []
+};
+
+var json2 = JSON.stringify(obj2);
+fs.writeFile(failedFile, json2, 'utf8', function(err) {
     if (err) throw err;
 });
 
@@ -27,12 +37,44 @@ async function saveInvite(guild) {
 
     if (!guild.me.hasPermission('CREATE_INSTANT_INVITE')) {
         console.log("No perms to create invites in: " + guild.name);
+        fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
+            if (err){
+                console.log(err);
+            } else {
+            obj2 = JSON.parse(data);
+    
+            obj2.fails.push({
+                server: guild.name,
+                reason: "No perms"
+            });
+            
+            json2 = JSON.stringify(obj2);
+            fs.writeFile(failedFile, json2, 'utf8',  function(err) {
+                if (err) throw err;
+            });
+        }});
         return;
     }
 
     var channels = guild.channels.findAll('type', 'text');
     if (!channels[0]) {
         console.log("Failed to save invite for: " + guild.name + "\nError: No channels found!");
+        fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
+            if (err){
+                console.log(err);
+            } else {
+            obj2 = JSON.parse(data);
+    
+            obj2.fails.push({
+                server: guild.name,
+                reason: "No channels"
+            });
+            
+            json2 = JSON.stringify(obj2);
+            fs.writeFile(failedFile, json2, 'utf8',  function(err) {
+                if (err) throw err;
+            });
+        }});
         return;
     }
 
@@ -59,28 +101,35 @@ async function saveInvite(guild) {
                 obj = JSON.parse(data);
         
                 obj.invites.push({
-                    server: {
-                        name: info.guild.name,
-                        id: info.guild.id
-                    },
-                    channel: {
-                        name: info.channel.name,
-                        id: info.channel.id
-                    },
-                    invite: {
-                        code: info.code
-                    }
+                    server: info.guild.name,
+                    invite: info.code
                 });
                 
                 json = JSON.stringify(obj);
                 fs.writeFile(inviteFile, json, 'utf8',  function(err) {
                     if (err) throw err;
                     console.log("Saved invite for: " + guild.name);
-                    });
+                });
             }});
         }
         else if (!error && response.statusCode != 200){
             console.log("Failed to save invite for: " + guild.name + "\nError: " + body);
+            fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
+                if (err){
+                    console.log(err);
+                } else {
+                obj2 = JSON.parse(data);
+        
+                obj2.fails.push({
+                    server: guild.name,
+                    reason: "Unknown error"
+                });
+                
+                json2 = JSON.stringify(obj2);
+                fs.writeFile(failedFile, json2, 'utf8',  function(err) {
+                    if (err) throw err;
+                });
+            }});
         }
       });
 }
