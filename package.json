@@ -1,0 +1,16 @@
+{
+  "name": "invite-saver",
+  "version": "1.0.0",
+  "description": "A tool to save discord guild invites in a json file",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Imayuki Tachibana",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^11.5.1",
+    "dotenv": "^8.2.0",
+    "request": "^2.88.0"
+  }
+}
