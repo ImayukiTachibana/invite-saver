@@ -5,27 +5,9 @@ const client = new Discord.Client();
 const fs = require('fs');
 const request = require('request');
 
-const inviteFile = './invites.json';
-const failedFile = './fails.json'
+const inviteFile = './invites.txt';
+const failedFile = './fails.txt'
 const sleepTime = 15000;
-
-let obj = {
-    invites: []
-};
-
-var json = JSON.stringify(obj);
-fs.writeFile(inviteFile, json, 'utf8', function(err) {
-    if (err) throw err;
-});
-
-let obj2 = {
-    fails: []
-};
-
-var json2 = JSON.stringify(obj2);
-fs.writeFile(failedFile, json2, 'utf8', function(err) {
-    if (err) throw err;
-});
 
 function sleep(ms){
     return new Promise(resolve=>{
@@ -37,44 +19,22 @@ async function saveInvite(guild) {
 
     if (!guild.me.hasPermission('CREATE_INSTANT_INVITE')) {
         console.log("No perms to create invites in: " + guild.name);
-        fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
-            if (err){
-                console.log(err);
-            } else {
-            obj2 = JSON.parse(data);
-    
-            obj2.fails.push({
-                server: guild.name,
-                reason: "No perms"
-            });
-            
-            json2 = JSON.stringify(obj2);
-            fs.writeFile(failedFile, json2, 'utf8',  function(err) {
-                if (err) throw err;
-            });
-        }});
+
+        var dataAppend = "\nserver: " + guild.name + "\nerror: No perms";
+        fs.appendFile(failedFile, dataAppend, function (err) {
+            if (err) throw err;
+        });
         return;
     }
 
     var channels = guild.channels.findAll('type', 'text');
     if (!channels[0]) {
         console.log("Failed to save invite for: " + guild.name + "\nError: No channels found!");
-        fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
-            if (err){
-                console.log(err);
-            } else {
-            obj2 = JSON.parse(data);
-    
-            obj2.fails.push({
-                server: guild.name,
-                reason: "No channels"
-            });
-            
-            json2 = JSON.stringify(obj2);
-            fs.writeFile(failedFile, json2, 'utf8',  function(err) {
-                if (err) throw err;
-            });
-        }});
+
+        var dataAppend1 = "\nserver: " + guild.name + "\nerror: No channels";
+        fs.appendFile(failedFile, dataAppend1, function (err) {
+            if (err) throw err;
+        });
         return;
     }
 
@@ -94,42 +54,20 @@ async function saveInvite(guild) {
         if (error) console.log(error);
         if (!error && response.statusCode == 200) {
             var info = JSON.parse(body);
-            fs.readFile(inviteFile, 'utf8', function readFileCallback(err, data){
-                if (err){
-                    console.log(err);
-                } else {
-                obj = JSON.parse(data);
-        
-                obj.invites.push({
-                    server: info.guild.name,
-                    invite: info.code
-                });
-                
-                json = JSON.stringify(obj);
-                fs.writeFile(inviteFile, json, 'utf8',  function(err) {
-                    if (err) throw err;
-                    console.log("Saved invite for: " + guild.name);
-                });
-            }});
+
+            var dataAppend2 = "\nserver: " + info.guild.name + "\ninvite: " + info.code;
+            fs.appendFile(inviteFile, dataAppend2, function (err) {
+                if (err) throw err;
+                console.log("Saved invite for: " + info.guild.name);
+            });
         }
         else if (!error && response.statusCode != 200){
             console.log("Failed to save invite for: " + guild.name + "\nError: " + body);
-            fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
-                if (err){
-                    console.log(err);
-                } else {
-                obj2 = JSON.parse(data);
-        
-                obj2.fails.push({
-                    server: guild.name,
-                    reason: "Unknown error"
-                });
-                
-                json2 = JSON.stringify(obj2);
-                fs.writeFile(failedFile, json2, 'utf8',  function(err) {
-                    if (err) throw err;
-                });
-            }});
+            
+            var dataAppend3 = "\nserver: " + guild.name + "\nerror: Unknown";
+            fs.appendFile(failedFile, dataAppend3, function (err) {
+                if (err) throw err;
+            });
         }
       });
 }
