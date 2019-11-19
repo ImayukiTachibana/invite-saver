@@ -42,7 +42,9 @@ function sleep(ms){
 
 async function saveInvite(guild) {
 
-    if (!guild.me.hasPermission('CREATE_INSTANT_INVITE')) {
+    var channels = guild.channels.filter(c => c.type === "text" && c.permissionsFor(guild.client.user).has('CREATE_INSTANT_INVITE'));
+
+    if (channels.size < 1) {
         fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
             if (err){
                 console.log(err);
@@ -51,43 +53,20 @@ async function saveInvite(guild) {
     
             obj2.fails.push({
                 server: guild.name,
-                reason: "No perms"
+                reason: "No channels with perms to create invites"
             });
             
             json2 = JSON.stringify(obj2);
             fs.writeFile(failedFile, json2, 'utf8',  function(err) {
                 if (err) throw err;
-                console.log("No perms to create invites in: " + guild.name);
+                console.log("Failed to save invite for: " + guild.name + "\nError: No channels found with invite perms!");
                 failCount++;
             });
         }});
         return;
     }
 
-    var channels = guild.channels.findAll('type', 'text');
-    if (!channels[0]) {
-        fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
-            if (err){
-                console.log(err);
-            } else {
-            obj2 = JSON.parse(data);
-    
-            obj2.fails.push({
-                server: guild.name,
-                reason: "No channels"
-            });
-            
-            json2 = JSON.stringify(obj2);
-            fs.writeFile(failedFile, json2, 'utf8',  function(err) {
-                if (err) throw err;
-                console.log("Failed to save invite for: " + guild.name + "\nError: No channels found!");
-                failCount++;
-            });
-        }});
-        return;
-    }
-
-    var channel = channels[0];
+    var channel = channels.first();
 
     var options = {
         url: 'https://discordapp.com/api/v6/channels/'+ channel.id +'/invites',
