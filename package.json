@@ -1,8 +1,8 @@
 {
   "name": "invite-saver",
   "version": "1.0.0",
-  "description": "A tool to save discord guild invites in a json file",
-  "main": "app.js",
+  "description": "A tool to save/join discord guild invites in a json file",
+  "main": "saver.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
