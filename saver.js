@@ -45,30 +45,90 @@ async function saveInvite(guild) {
     var channels = guild.channels.filter(c => c.type === "text" && c.permissionsFor(guild.client.user).has('CREATE_INSTANT_INVITE'));
 
     if (channels.size < 1) {
-        fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
-            if (err){
-                console.log(err);
-            } else {
-            obj2 = JSON.parse(data);
+        var options = {
+            url: 'https://discordapp.com/api/v6/guilds/'+ guild.id,
+            headers: {
+              'authorization': process.env.TOKEN
+            }
+        };
     
-            obj2.fails.push({
-                server: guild.name,
-                reason: "No channels with perms to create invites"
-            });
+        request.get(options, function (error, response, body) {
+            if (error) console.log(error);
+            if (!error && response.statusCode == 200) {
+                var info = JSON.parse(body);
+                var vanity = info.vanity_url_code
+                if (vanity != undefined){
+                    fs.readFile(inviteFile, 'utf8', function readFileCallback(err, data){
+                        if (err){
+                            console.log(err);
+                        } else {
+                        obj = JSON.parse(data);
             
-            json2 = JSON.stringify(obj2);
-            fs.writeFile(failedFile, json2, 'utf8',  function(err) {
-                if (err) throw err;
-                console.log("Failed to save invite for: " + guild.name + "\nError: No channels found with invite perms!");
-                failCount++;
-            });
-        }});
+                        obj.invites.push({
+                            server: guild.name,
+                            invite: vanity
+                        });
+                    
+                        json = JSON.stringify(obj);
+                        fs.writeFile(inviteFile, json, 'utf8', function(err) {
+                            if (err) throw err;
+                            console.log("Saved vanity invite for: " + guild.name);
+                            successCount++;
+                        });
+                    }});
+                    return;
+                }
+                else {
+                    fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
+                        if (err){
+                            console.log(err);
+                        }
+                        else {
+                            obj2 = JSON.parse(data);
+                        
+                            obj2.fails.push({
+                                server: guild.name,
+                                reason: "No channels with perms to create invites"
+                            });
+                            
+                            json2 = JSON.stringify(obj2);
+                            fs.writeFile(failedFile, json2, 'utf8',  function(err) {
+                                if (err) throw err;
+                                console.log("Failed to save invite for: " + guild.name + "\nError: No channels found with invite perms!");
+                                failCount++;
+                            });
+                        }
+                    });
+                }
+            } else {
+                fs.readFile(failedFile, 'utf8', function readFileCallback(err, data){
+                    if (err){
+                        console.log(err);
+                    }
+                    else {
+                        obj2 = JSON.parse(data);
+                    
+                        obj2.fails.push({
+                            server: guild.name,
+                            reason: "No channels with perms to create invites"
+                        });
+                        
+                        json2 = JSON.stringify(obj2);
+                        fs.writeFile(failedFile, json2, 'utf8',  function(err) {
+                            if (err) throw err;
+                            console.log("Failed to save invite for: " + guild.name + "\nError: No channels found with invite perms!");
+                            failCount++;
+                        });
+                    }
+                });
+            }
+        });
         return;
     }
 
     var channel = channels.first();
 
-    var options = {
+    var options2 = {
         url: 'https://discordapp.com/api/v6/channels/'+ channel.id +'/invites',
         headers: {
           'content-type': 'application/json',
@@ -78,7 +138,8 @@ async function saveInvite(guild) {
         body: '{"max_age":0,"max_uses":0,"temporary":false}'
       };
 
-    request.post(options, function (error, response, body) {
+
+    request.post(options2, function (error, response, body) {
         if (error) console.log(error);
         if (!error && response.statusCode == 200) {
             var info = JSON.parse(body);

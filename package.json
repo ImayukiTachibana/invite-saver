@@ -9,7 +9,7 @@
   "author": "Imayuki Tachibana",
   "license": "MIT",
   "dependencies": {
-    "discord.js": "^11.5.1",
+    "discord.js": "git://github.com/discordjs/discord.js.git#11.5-dev",
     "dotenv": "^8.2.0",
     "request": "^2.88.0"
   }
